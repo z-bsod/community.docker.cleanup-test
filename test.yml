@@ -1,0 +1,81 @@
+---
+- hosts: localhost
+  tasks:
+    - name: Build images
+      community.docker.docker_image_build:
+        name: testimage
+        tag: "{{ item }}"
+        path: compose
+      loop:
+        - "1"
+        - "2"
+        - "3"
+
+    - name: Start compose with image version 1
+      community.docker.docker_compose_v2:
+        project_src: compose
+        state: present
+        env_files:
+          - v1.env
+
+    - name: create file in image
+      community.docker.docker_compose_v2_exec:
+        project_src: compose
+        env_files:
+          - v1.env
+        service: test
+        command: touch /var/test/image_v1
+
+    - name: get folder contents
+      community.docker.docker_compose_v2_exec:
+        project_src: compose
+        env_files:
+          - v1.env
+        service: test
+        command: ls -l /var/test
+      register: folder
+
+    - name: Output folder contents
+      ansible.builtin.debug:
+        var: folder.stdout
+
+    - name: start image with image version 2
+      community.docker.docker_compose_v2:
+        project_src: compose
+        env_files:
+          - v2.env
+        state: present
+
+    - name: get folder contents of v2 container
+      community.docker.docker_compose_v2_exec:
+        project_src: compose
+        env_files:
+          - v2.env
+        command: ls -l /var/test
+        service: test
+      register: folder
+
+    - name: Output folder contents
+      ansible.builtin.debug:
+        var: folder.stdout
+
+    - name: start image with image version 3 and cleanup parameter
+      community.docker.docker_compose_v2:
+        project_src: compose
+        renew_anon_volumes: true
+        state: present
+        env_files:
+          - v3.env
+
+    - name: get folder contents of v3 container
+      community.docker.docker_compose_v2_exec:
+        project_src: compose
+        env_files:
+          - v3.env
+        command: ls -l /var/test
+        service: test
+      register: folder
+
+    - name: Output folder contents
+      ansible.builtin.debug:
+        var: folder.stdout

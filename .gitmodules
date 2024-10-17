@@ -1,0 +1,3 @@
+[submodule "collections/ansible_collections/community/docker"]
+	path = collections/ansible_collections/community/docker
+	url = https://github.com/z-bsod/community.docker.git
